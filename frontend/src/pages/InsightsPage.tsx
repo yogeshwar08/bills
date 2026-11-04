@@ -135,28 +135,28 @@ export const InsightsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Monthly Summary Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-indigo-600 rounded-3xl p-5 text-white shadow-lg shadow-indigo-200/50 col-span-2 space-y-2">
+      {/* Responsive Insights Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+        {/* Monthly Summary Card */}
+        <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-200/50 space-y-3 lg:col-span-1">
           <div className="flex items-center justify-between text-indigo-200">
             <span className="text-xs font-semibold uppercase tracking-wider">
               {formatMonthName(selectedMonth)} Spend
             </span>
-            <TrendingUp className="w-4 h-4 text-white" />
+            <TrendingUp className="w-5 h-5 text-white" />
           </div>
-          <div className="text-3xl font-black tracking-tight">
+          <div className="text-3xl sm:text-4xl font-black tracking-tight">
             ₹{monthTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="flex items-center space-x-3 text-xs text-indigo-100/90 pt-1 border-t border-indigo-500/40">
+          <div className="flex items-center space-x-3 text-xs text-indigo-100/90 pt-2 border-t border-indigo-500/40">
             <span>{monthBills.length} {monthBills.length === 1 ? 'bill' : 'bills'} recorded</span>
             <span>•</span>
             <span>Avg: ₹{avgBillAmount.toFixed(2)} / bill</span>
           </div>
         </div>
-      </div>
 
-      {/* Visual Category Breakdown */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+        {/* Visual Category Breakdown */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5 lg:col-span-2">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-slate-900 text-sm tracking-tight flex items-center space-x-1.5">
             <PieChart className="w-4 h-4 text-indigo-600" />
@@ -214,6 +214,7 @@ export const InsightsPage: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
       </div>
 
       {/* Privacy Guarantee callout */}

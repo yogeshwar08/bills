@@ -144,7 +144,7 @@ export const ExtractionCorrectionView: React.FC<ExtractionCorrectionViewProps> =
   };
 
   return (
-    <div className="max-w-md sm:max-w-xl md:max-w-2xl mx-auto space-y-5 pb-24">
+    <div className="max-w-5xl mx-auto space-y-5 pb-24">
       {/* Top Banner & Header */}
       <div className="flex items-center justify-between">
         <button
@@ -160,37 +160,41 @@ export const ExtractionCorrectionView: React.FC<ExtractionCorrectionViewProps> =
         </div>
       </div>
 
-      {/* Bill Preview Card with expandable details */}
-      <div className="rounded-2xl overflow-hidden bg-white border border-slate-200/90 shadow-xs p-3.5 sm:p-4">
-        <div className="flex space-x-3.5 items-center">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shrink-0">
-            <img src={previewUrl} alt="Receipt thumbnail" className="w-full h-full object-cover" />
+      {/* Responsive 2-Column Grid on Desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Image Preview & Verification Summary */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="rounded-2xl overflow-hidden bg-white border border-slate-200/90 shadow-xs p-4 space-y-3">
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Scanned Document</div>
+            <div className="w-full max-h-80 rounded-xl overflow-hidden bg-slate-950 border border-slate-200 flex items-center justify-center">
+              <img src={previewUrl} alt="Receipt thumbnail" className="w-full h-full object-contain max-h-80" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-slate-900">Genuine Bill Verified</div>
+              <div className="text-xs text-slate-600 mt-1 leading-relaxed">{result.reason}</div>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Classification</div>
-            <div className="text-sm sm:text-base font-bold text-slate-900 truncate">Genuine Bill Verified</div>
-            <div className="text-xs text-slate-600 line-clamp-2 mt-1">{result.reason}</div>
+
+          {/* Statistical Disclaimer */}
+          <div className="p-3.5 rounded-xl bg-slate-100/90 border border-slate-200/80 flex items-start space-x-2 text-[11px] text-slate-600 leading-relaxed">
+            <Info className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+            <p>
+              Confidence scores are model heuristic estimates, not calibrated statistical probabilities. Please review and adjust any field before saving.
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Statistical Disclaimer */}
-      <div className="p-3.5 rounded-xl bg-slate-100/90 border border-slate-200/80 flex items-start space-x-2 text-[11px] text-slate-600 leading-relaxed">
-        <Info className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
-        <p>
-          Confidence scores are model heuristic estimates, not calibrated statistical probabilities. Please review and adjust any field below before saving.
-        </p>
-      </div>
+        {/* Right Column: Editable Fields Form */}
+        <div className="lg:col-span-7 space-y-4">
+          {validationError && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>{validationError}</span>
+            </div>
+          )}
 
-      {validationError && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center space-x-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-          <span>{validationError}</span>
-        </div>
-      )}
-
-      {/* Editable Fields Form */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-4">
+          {/* Editable Fields Form */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-4">
         
         {/* 1. Merchant Name */}
         <div className="space-y-1.5">
@@ -366,26 +370,28 @@ export const ExtractionCorrectionView: React.FC<ExtractionCorrectionViewProps> =
         </div>
       </div>
 
-      {/* Save Button */}
-      <div className="pt-2">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center justify-center space-x-2 shadow-md shadow-indigo-200 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
-        >
-          {isSaving ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>Saving to Local Database...</span>
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              <span>Save Verified Bill Locally</span>
-            </>
-          )}
-        </button>
+          {/* Save Button */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center justify-center space-x-2 shadow-md shadow-indigo-200 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+            >
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Saving to Local Database...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>Save Verified Bill Locally</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

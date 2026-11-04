@@ -96,7 +96,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Navbar />
+      <Navbar onOpenUpload={() => setIsUploadOpen(true)} />
 
       {/* Global Success Toast */}
       {savedToast && (
@@ -108,8 +108,8 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-md md:max-w-2xl lg:max-w-4xl w-full mx-auto p-4 sm:p-6 transition-all">
+      {/* Main Content Area - Full width responsive container */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 transition-all">
         {isSessionActive ? (
           <div>
             {isAnalyzing || analysisError ? (
