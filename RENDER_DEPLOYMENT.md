@@ -51,7 +51,7 @@ If you prefer to configure services manually, follow these steps:
    - **Name**: `bill-snap-api`
    - **Region**: Choose closest (e.g., Oregon or Frankfurt)
    - **Branch**: `main`
-   - **Root Directory**: `backend`
+   - **Root Directory**: `backend` *(Important: if left blank, our root `requirements.txt` will still handle it)*
    - **Runtime**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
@@ -103,3 +103,4 @@ If you prefer to configure services manually, follow these steps:
 > [!NOTE]
 > **Render Free Tier Spin-Down:**
 > Render free web services spin down after 15 minutes of inactivity. The first request after sleep may take ~30-50 seconds to wake up the server. Once awake, requests respond in normal sub-second time.
+

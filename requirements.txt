@@ -1,0 +1,2 @@
+# Bill Snap Root Requirements (redirects to backend/requirements.txt)
+-r backend/requirements.txt
