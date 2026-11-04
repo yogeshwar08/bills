@@ -1,0 +1,22 @@
+image_id,image_type,image_condition,actual_is_bill,merchant_actual,date_actual,amount_actual,category_actual,notes
+bill_01,BILL,Clear printed receipt,TRUE,Blue Bottle Coffee,2024-10-12,18.50,Food,Standard clear thermal coffee receipt
+bill_02,BILL,Grocery bill,TRUE,Fresh Supermarket,2024-10-15,452.80,Groceries,Supermarket itemized receipt with subtotal and taxes
+bill_03,BILL,Restaurant bill,TRUE,Spice Garden Bistro,2024-10-18,1250.00,Food,Dine-in restaurant bill with service charge
+bill_04,BILL,Electricity bill,TRUE,City Power Supply Ltd,2024-10-01,2340.00,Utilities,Monthly residential electricity bill
+bill_05,BILL,Water bill,TRUE,Municipal Water Board,2024-09-28,480.00,Utilities,Quarterly municipal water tariff invoice
+bill_06,BILL,Internet bill,TRUE,Airtel Broadband,2024-10-05,999.00,Utilities,Monthly fiber internet subscription bill
+bill_07,BILL,Pharmacy bill,TRUE,Apollo Pharmacy,2024-10-20,385.50,Healthcare,Prescription medicine retail invoice
+bill_08,BILL,Shopping invoice,TRUE,Decathlon Sports,2024-10-14,2499.00,Shopping,Retail apparel and gear invoice
+bill_09,BILL,Handwritten bill,TRUE,Gupta Kirana Store,2024-10-10,320.00,Groceries,Handwritten cash memo on yellow receipt pad
+bill_10,BILL,Crumpled bill,TRUE,Metro Wholesale,2024-10-08,1875.25,Groceries,Wrinkled paper receipt with folded creases
+bill_11,BILL,Blurry bill,TRUE,Starbucks Coffee,2024-10-22,350.00,Food,Motion blurred camera capture
+bill_12,BILL,Angled photograph,TRUE,Burger King,2024-10-16,420.00,Food,Perspective skew taken at 45 degree angle
+bill_13,BILL,Low-light photograph,TRUE,Night Owl Diner,2024-10-19,680.00,Food,Dimly lit indoor restaurant receipt
+bill_14,BILL,Long receipt,TRUE,HyperCity Hypermarket,2024-10-03,3420.75,Groceries,Long 25-item receipt with multiple subtotals
+bill_15,BILL,Faded or partially damaged receipt,TRUE,Reliance Retail,2024-09-15,815.00,Shopping,Thermal receipt with faded bottom section
+non_bill_16,NON_BILL,Selfie,FALSE,N/A,N/A,N/A,N/A,Portrait photo of an individual
+non_bill_17,NON_BILL,ID card,FALSE,N/A,N/A,N/A,N/A,Government identification card
+non_bill_18,NON_BILL,General screenshot,FALSE,N/A,N/A,N/A,N/A,Screenshot of a social media chat app
+non_bill_19,NON_BILL,Personal photograph,FALSE,N/A,N/A,N/A,N/A,Outdoor landscape photograph of a park
+non_bill_20,NON_BILL,General non-financial document,FALSE,N/A,N/A,N/A,N/A,Printed university certificate of completion
+

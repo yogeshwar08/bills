@@ -1,0 +1,2 @@
+image_id,image_type,image_condition,actual_is_bill,predicted_is_bill,classification_correct,merchant_actual,merchant_predicted,merchant_correct,date_actual,date_predicted,date_correct,amount_actual,amount_predicted,amount_correct,category_actual,category_predicted,category_correct,failure_reason,notes
+
