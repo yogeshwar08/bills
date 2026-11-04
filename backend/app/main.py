@@ -19,7 +19,10 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS configuration - explicit origins when allow_credentials=True
+# CORS configuration - supports local dev, explicit custom origins, and all Render domains
+allowed_origins_env = os.environ.get("ALLOWED_ORIGINS", "")
+custom_origins = [orig.strip() for orig in allowed_origins_env.split(",") if orig.strip()]
+
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -27,12 +30,12 @@ origins = [
     "http://127.0.0.1:4173",
     "http://localhost:3000",
     "http://127.0.0.1:3000"
-]
+] + custom_origins
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):5173",
+    allow_origin_regex=r"(https://.*\.onrender\.com|http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):5173)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

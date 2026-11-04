@@ -1,6 +1,7 @@
 import { BillAnalysisResponse, HealthStatus } from '../types';
 
-const API_BASE = '/api';
+const rawApiUrl = (import.meta.env.VITE_API_URL as string) || '';
+const API_BASE = rawApiUrl ? `${rawApiUrl.replace(/\/$/, '')}/api` : '/api';
 
 export class ApiError extends Error {
   errorCode: string;
