@@ -33,6 +33,7 @@ class BillFields(BaseModel):
     category: ExtractedField[BillCategoryEnum]
 
 class BillAnalysisResponse(BaseModel):
+    scan_id: Optional[str] = Field(default=None, description="SQLite record identifier where structured output is persisted")
     classification: ClassificationEnum
     classification_confidence: float = Field(ge=0.0, le=1.0)
     reason: str

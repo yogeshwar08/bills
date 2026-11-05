@@ -206,3 +206,64 @@ def test_gemini_service_json_extractor():
     with pytest.raises(GeminiServiceException):
         GeminiVisionService._extract_json_from_text("Invalid non json string")
 
+# ----------------- SQLITE 3 DATABASE TESTS -----------------
+
+def test_sqlite_persistence_and_endpoints():
+    mock_response = BillAnalysisResponse(
+        classification=ClassificationEnum.BILL,
+        classification_confidence=0.97,
+        reason="Test invoice receipt",
+        fields=BillFields(
+            merchant_name=ExtractedField(value="SQLite Mart", confidence=0.96, reason=None),
+            date=ExtractedField(value="2026-11-05", confidence=0.94, reason=None),
+            total_amount=ExtractedField(value=189.50, confidence=0.98, reason=None),
+            currency="INR",
+            category=ExtractedField(value=BillCategoryEnum.GROCERIES, confidence=0.92, reason=None)
+        )
+    )
+
+    with patch.object(GeminiVisionService, "analyze_bill_image", return_value=mock_response):
+        image_bytes = create_dummy_image_bytes()
+        res = client.post(
+            "/api/analyze",
+            files={"file": ("test_sqlite_bill.jpg", image_bytes, "image/jpeg")}
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "scan_id" in data
+        scan_id = data["scan_id"]
+        assert scan_id.startswith("scan_")
+
+        # 1. Test GET /api/scans
+        list_res = client.get("/api/scans")
+        assert list_res.status_code == 200
+        scans = list_res.json()
+        assert any(s["scan_id"] == scan_id for s in scans)
+
+        # 2. Test GET /api/scans/{scan_id}
+        get_res = client.get(f"/api/scans/{scan_id}")
+        assert get_res.status_code == 200
+        record = get_res.json()
+        assert record["merchant_name"] == "SQLite Mart"
+        assert record["total_amount"] == 189.50
+        assert record["currency"] == "INR"
+        assert record["category"] == "Groceries"
+        assert record["classification"] == "BILL"
+
+        # 3. Test GET /api/scans-stats
+        stats_res = client.get("/api/scans-stats")
+        assert stats_res.status_code == 200
+        stats = stats_res.json()
+        assert stats["total_bills"] >= 1
+        assert stats["total_spending"] >= 189.50
+
+        # 4. Test DELETE /api/scans/{scan_id}
+        del_res = client.delete(f"/api/scans/{scan_id}")
+        assert del_res.status_code == 200
+        assert del_res.json()["status"] == "success"
+
+        # Confirm deleted
+        del_check = client.get(f"/api/scans/{scan_id}")
+        assert del_check.status_code == 404
+
+

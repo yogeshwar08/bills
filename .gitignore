@@ -44,6 +44,12 @@ backend/.env
 frontend/.env
 !*.env.example
 
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+backend/*.db
+
 # IDE & OS
 .vscode/
 .idea/

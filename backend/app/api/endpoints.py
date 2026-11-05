@@ -1,10 +1,12 @@
 import os
-from fastapi import APIRouter, UploadFile, File, HTTPException, status
+from typing import Optional, List
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query, status
 from fastapi.responses import JSONResponse
 
 from app.schemas.bill_schema import BillAnalysisResponse, HealthResponse
 from app.services.image_preprocessor import ImagePreprocessor, ImagePreprocessingError
 from app.services.gemini_service import GeminiVisionService, GeminiServiceException
+from app.services.database_service import db_service
 from app.utils.logger import logger
 
 router = APIRouter()
@@ -77,6 +79,14 @@ async def analyze_bill(file: UploadFile = File(...)):
     # 3. Call Gemini Vision
     try:
         result = gemini_service.analyze_bill_image(processed_bytes, mime_type)
+
+        # 4. Automatically persist structured output in SQLite 3 database
+        try:
+            scan_id = db_service.save_scan(result, filename=file.filename)
+            result.scan_id = scan_id
+        except Exception as db_err:
+            logger.error("Failed to persist scan output to SQLite: %s", str(db_err))
+
         return result
     except GeminiServiceException as gse:
         logger.error("Gemini service exception [%s]: %s", gse.error_code, gse.message)
@@ -90,4 +100,43 @@ async def analyze_bill(file: UploadFile = File(...)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"error_code": "INTERNAL_SERVER_ERROR", "message": "An unexpected error occurred during bill analysis."}
         )
+
+
+@router.get("/scans", response_model=List[dict])
+def list_scans(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0)
+):
+    """Retrieves list of structured bill scan outputs stored in SQLite."""
+    return db_service.list_scans(limit=limit, offset=offset)
+
+
+@router.get("/scans/{scan_id}")
+def get_scan(scan_id: str):
+    """Retrieves a single structured bill scan from SQLite by scan_id."""
+    record = db_service.get_scan(scan_id)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error_code": "SCAN_NOT_FOUND", "message": f"Scan '{scan_id}' not found in database."}
+        )
+    return record
+
+
+@router.delete("/scans/{scan_id}")
+def delete_scan(scan_id: str):
+    """Deletes a scan record from SQLite by scan_id."""
+    deleted = db_service.delete_scan(scan_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error_code": "SCAN_NOT_FOUND", "message": f"Scan '{scan_id}' not found in database."}
+        )
+    return {"status": "success", "message": f"Scan '{scan_id}' deleted successfully."}
+
+
+@router.get("/scans-stats")
+def get_scans_stats():
+    """Returns summary metrics across all scans saved in SQLite."""
+    return db_service.get_stats()
 

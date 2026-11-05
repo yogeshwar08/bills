@@ -26,6 +26,7 @@ export interface BillFields {
 }
 
 export interface BillAnalysisResponse {
+  scan_id?: string;
   classification: ClassificationType;
   classification_confidence: number;
   reason: string;
