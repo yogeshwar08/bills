@@ -80,6 +80,31 @@ async def analyze_bill(file: UploadFile = File(...)):
     try:
         result = gemini_service.analyze_bill_image(processed_bytes, mime_type)
 
+        # Check for duplicate scan in database (same merchant and same amount)
+        if (
+            result.fields
+            and result.fields.merchant_name
+            and result.fields.merchant_name.value
+            and result.fields.total_amount
+            and result.fields.total_amount.value is not None
+        ):
+            existing_dup = db_service.check_duplicate(
+                result.fields.merchant_name.value,
+                result.fields.total_amount.value
+            )
+            if existing_dup:
+                result.is_duplicate = True
+                result.duplicate_warning = (
+                    f"A bill from '{existing_dup['merchant_name']}' with total amount "
+                    f"₹{existing_dup['total_amount']:.2f} was already scanned on {existing_dup['created_at']} "
+                    f"(Scan ID: {existing_dup['scan_id']})."
+                )
+                logger.warning(
+                    "Duplicate bill detected: merchant=%s, amount=%s",
+                    result.fields.merchant_name.value,
+                    result.fields.total_amount.value
+                )
+
         # 4. Automatically persist structured output in SQLite 3 database
         try:
             scan_id = db_service.save_scan(result, filename=file.filename)

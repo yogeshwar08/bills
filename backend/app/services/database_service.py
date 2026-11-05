@@ -52,17 +52,48 @@ class DatabaseService:
                     category_confidence REAL,
                     category_reason TEXT,
                     raw_json TEXT NOT NULL,
+                    is_duplicate INTEGER DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
                 """)
+                # Safe migration for existing databases:
+                try:
+                    conn.execute("ALTER TABLE bill_scans ADD COLUMN is_duplicate INTEGER DEFAULT 0;")
+                except sqlite3.OperationalError:
+                    pass
+
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_bill_scans_created ON bill_scans(created_at DESC);")
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_bill_scans_classification ON bill_scans(classification);")
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_bill_scans_merchant ON bill_scans(merchant_name);")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_bill_scans_dup ON bill_scans(merchant_name, total_amount);")
                 conn.commit()
                 logger.info("SQLite database initialized at: %s", self.db_path)
         except Exception as e:
             logger.error("Failed to initialize SQLite database: %s", str(e))
             raise
+
+    def check_duplicate(self, merchant_name: Optional[str], total_amount: Optional[float]) -> Optional[Dict[str, Any]]:
+        """
+        Checks if an identical bill (same merchant name AND same amount) already exists in SQLite.
+        Note: If the merchant name is the same but the amount is different, it is NOT considered duplicate.
+        """
+        if not merchant_name or total_amount is None:
+            return None
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                """
+                SELECT * FROM bill_scans
+                WHERE LOWER(TRIM(merchant_name)) = LOWER(TRIM(?))
+                  AND ABS(total_amount - ?) < 0.01
+                  AND classification = 'BILL'
+                ORDER BY id DESC LIMIT 1;
+                """,
+                (merchant_name, float(total_amount))
+            )
+            row = cursor.fetchone()
+            if row:
+                return dict(row)
+        return None
 
     def save_scan(self, result: BillAnalysisResponse, filename: Optional[str] = None) -> str:
         """
@@ -107,16 +138,18 @@ class DatabaseService:
             bill_date, bill_date_confidence, bill_date_reason,
             total_amount, total_amount_confidence, total_amount_reason,
             currency, category, category_confidence, category_reason,
-            raw_json, created_at
+            raw_json, is_duplicate, created_at
         ) VALUES (
             ?, ?, ?, ?, ?,
             ?, ?, ?, ?,
             ?, ?, ?,
             ?, ?, ?,
             ?, ?, ?, ?,
-            ?, CURRENT_TIMESTAMP
+            ?, ?, CURRENT_TIMESTAMP
         );
         """
+
+        is_dup_int = 1 if getattr(result, "is_duplicate", False) else 0
 
         params = (
             scan_id,
@@ -138,7 +171,8 @@ class DatabaseService:
             str(category) if category else None,
             float(category_confidence) if category_confidence is not None else None,
             category_reason,
-            raw_json
+            raw_json,
+            is_dup_int
         )
 
         with self._get_connection() as conn:

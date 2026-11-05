@@ -39,6 +39,8 @@ class BillAnalysisResponse(BaseModel):
     reason: str
     non_bill_type: Optional[str] = Field(default=None, description="Detailed category if classified as NON_BILL (e.g. ID card, selfie, unclear image)")
     fields: Optional[BillFields] = None
+    is_duplicate: bool = Field(default=False, description="Flag indicating if a bill with same merchant and amount was already scanned")
+    duplicate_warning: Optional[str] = Field(default=None, description="Explanation message if duplicate bill is detected")
 
 class HealthResponse(BaseModel):
     status: str

@@ -266,4 +266,74 @@ def test_sqlite_persistence_and_endpoints():
         del_check = client.get(f"/api/scans/{scan_id}")
         assert del_check.status_code == 404
 
+def test_duplicate_bill_detection_same_and_different_amount():
+    """
+    Tests:
+    1. First bill scan: is_duplicate is False.
+    2. Exact duplicate bill (same merchant + same amount): is_duplicate is True with duplicate_warning.
+    3. Same merchant but DIFFERENT amount: is_duplicate is False (accepted!).
+    """
+    first_bill = BillAnalysisResponse(
+        classification=ClassificationEnum.BILL,
+        classification_confidence=0.98,
+        reason="Retail receipt",
+        fields=BillFields(
+            merchant_name=ExtractedField(value="Blue Tokai Coffee", confidence=0.95, reason=None),
+            date=ExtractedField(value="2026-11-05", confidence=0.92, reason=None),
+            total_amount=ExtractedField(value=350.00, confidence=0.98, reason=None),
+            currency="INR",
+            category=ExtractedField(value=BillCategoryEnum.FOOD, confidence=0.90, reason=None)
+        )
+    )
+
+    image_bytes = create_dummy_image_bytes()
+
+    # Step 1: First scan -> not a duplicate
+    with patch.object(GeminiVisionService, "analyze_bill_image", return_value=first_bill):
+        res1 = client.post("/api/analyze", files={"file": ("coffee1.jpg", image_bytes, "image/jpeg")})
+        assert res1.status_code == 200
+        data1 = res1.json()
+        assert data1["is_duplicate"] is False
+
+    # Step 2: Second scan of same merchant + same amount -> duplicate detected!
+    dup_bill = BillAnalysisResponse(
+        classification=ClassificationEnum.BILL,
+        classification_confidence=0.98,
+        reason="Retail receipt",
+        fields=BillFields(
+            merchant_name=ExtractedField(value="Blue Tokai Coffee", confidence=0.95, reason=None),
+            date=ExtractedField(value="2026-11-05", confidence=0.92, reason=None),
+            total_amount=ExtractedField(value=350.00, confidence=0.98, reason=None),
+            currency="INR",
+            category=ExtractedField(value=BillCategoryEnum.FOOD, confidence=0.90, reason=None)
+        )
+    )
+    with patch.object(GeminiVisionService, "analyze_bill_image", return_value=dup_bill):
+        res2 = client.post("/api/analyze", files={"file": ("coffee_dup.jpg", image_bytes, "image/jpeg")})
+        assert res2.status_code == 200
+        data2 = res2.json()
+        assert data2["is_duplicate"] is True
+        assert "duplicate_warning" in data2
+        assert "Blue Tokai Coffee" in data2["duplicate_warning"]
+
+    # Step 3: Same merchant but DIFFERENT amount (520.00) -> NOT a duplicate! Must be accepted!
+    diff_amount_bill = BillAnalysisResponse(
+        classification=ClassificationEnum.BILL,
+        classification_confidence=0.98,
+        reason="Retail receipt",
+        fields=BillFields(
+            merchant_name=ExtractedField(value="Blue Tokai Coffee", confidence=0.95, reason=None),
+            date=ExtractedField(value="2026-11-05", confidence=0.92, reason=None),
+            total_amount=ExtractedField(value=520.00, confidence=0.98, reason=None),
+            currency="INR",
+            category=ExtractedField(value=BillCategoryEnum.FOOD, confidence=0.90, reason=None)
+        )
+    )
+    with patch.object(GeminiVisionService, "analyze_bill_image", return_value=diff_amount_bill):
+        res3 = client.post("/api/analyze", files={"file": ("coffee_diff_amt.jpg", image_bytes, "image/jpeg")})
+        assert res3.status_code == 200
+        data3 = res3.json()
+        assert data3["is_duplicate"] is False
+
+
 

@@ -32,6 +32,8 @@ export interface BillAnalysisResponse {
   reason: string;
   non_bill_type: string | null;
   fields: BillFields | null;
+  is_duplicate?: boolean;
+  duplicate_warning?: string | null;
 }
 
 export interface SavedBill {

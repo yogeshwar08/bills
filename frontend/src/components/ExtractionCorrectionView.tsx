@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { 
   Building2, 
   Calendar, 
   DollarSign, 
   Tag, 
-  AlertCircle, 
+  AlertCircle,
+  AlertTriangle,
   HelpCircle, 
   Save, 
   ArrowLeft,
@@ -72,6 +74,27 @@ export const ExtractionCorrectionView: React.FC<ExtractionCorrectionViewProps> =
   const amountConf = getConfidenceBadgeProps(fields?.total_amount.confidence ?? 0.5);
   const categoryConf = getConfidenceBadgeProps(fields?.category.confidence ?? 0.5);
 
+  // Query existing bills from IndexedDB for duplicate detection
+  const existingBills = useLiveQuery(() => db.bills.toArray(), []);
+
+  // Duplicate Check:
+  // If merchant name AND amount match an existing bill -> considered duplicate!
+  // If merchant name matches but amount is DIFFERENT -> accepted!
+  const duplicateMatch = useMemo(() => {
+    if (!existingBills || !merchantName.trim() || !amount) return null;
+    const parsed = parseFloat(amount);
+    if (isNaN(parsed) || parsed <= 0) return null;
+
+    const normMerchant = merchantName.trim().toLowerCase();
+    return (
+      existingBills.find(
+        (b) =>
+          b.merchantName.trim().toLowerCase() === normMerchant &&
+          Math.abs(Number(b.amount) - parsed) < 0.01
+      ) || null
+    );
+  }, [existingBills, merchantName, amount]);
+
   const handleSave = async () => {
     setValidationError(null);
 
@@ -89,6 +112,17 @@ export const ExtractionCorrectionView: React.FC<ExtractionCorrectionViewProps> =
 
     if (!date) {
       setValidationError('Please specify the transaction date.');
+      return;
+    }
+
+    // Duplicate Bill Check:
+    // If same merchant name AND same amount already exists in History -> give error & reject!
+    if (duplicateMatch) {
+      setValidationError(
+        `Duplicate Bill Detected: A bill from "${duplicateMatch.merchantName}" for ${
+          duplicateMatch.currency === 'INR' ? '₹' : duplicateMatch.currency
+        } ${duplicateMatch.amount.toFixed(2)} on ${duplicateMatch.date} already exists in your history. Duplicate bills cannot be added.`
+      );
       return;
     }
 
@@ -186,6 +220,27 @@ export const ExtractionCorrectionView: React.FC<ExtractionCorrectionViewProps> =
 
         {/* Right Column: Editable Fields Form */}
         <div className="lg:col-span-7 space-y-4">
+          {/* Duplicate Bill Alert Banner */}
+          {duplicateMatch && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-xs text-amber-900 space-y-1.5 shadow-xs">
+              <div className="flex items-center space-x-1.5 font-bold text-amber-800">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Duplicate Bill Detected in History</span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                A bill from <strong>{duplicateMatch.merchantName}</strong> with identical amount{' '}
+                <strong>
+                  {duplicateMatch.currency === 'INR' ? '₹' : duplicateMatch.currency}{' '}
+                  {duplicateMatch.amount.toFixed(2)}
+                </strong>{' '}
+                (dated {duplicateMatch.date}) already exists in your history. Duplicate bills cannot be added twice.
+              </p>
+              <div className="text-[11px] text-amber-700 bg-amber-100/60 p-2 rounded-xl">
+                💡 <strong>Different Amount?</strong> If this is a separate receipt from the same merchant with a different total, enter its correct amount below and it will be accepted!
+              </div>
+            </div>
+          )}
+
           {validationError && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
@@ -375,13 +430,22 @@ export const ExtractionCorrectionView: React.FC<ExtractionCorrectionViewProps> =
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving}
-              className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center justify-center space-x-2 shadow-md shadow-indigo-200 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+              disabled={isSaving || Boolean(duplicateMatch)}
+              className={`w-full py-4 px-6 rounded-2xl font-bold text-sm flex items-center justify-center space-x-2 shadow-md transition-all active:scale-[0.99] cursor-pointer ${
+                duplicateMatch
+                  ? 'bg-rose-500 text-white opacity-90 cursor-not-allowed shadow-rose-200'
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200 disabled:opacity-50'
+              }`}
             >
               {isSaving ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>Saving to Local Database...</span>
+                </>
+              ) : duplicateMatch ? (
+                <>
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Cannot Save Duplicate Bill (Same Amount)</span>
                 </>
               ) : (
                 <>
