@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ReceiptText, Wifi, WifiOff, Camera, Home, History, PieChart } from 'lucide-react';
+import { ReceiptText, Wifi, WifiOff, Camera, Home, History, PieChart, Database } from 'lucide-react';
 import { fetchHealth } from '../services/api';
 
 interface NavbarProps {
@@ -92,6 +92,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenUpload }) => {
           >
             <PieChart className="w-4 h-4" />
             <span>Insights</span>
+          </NavLink>
+          <NavLink
+            to="/database"
+            className={({ isActive }) =>
+              `flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                isActive ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`
+            }
+          >
+            <Database className="w-4 h-4" />
+            <span>Database</span>
           </NavLink>
         </nav>
 

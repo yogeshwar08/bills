@@ -73,3 +73,36 @@ export interface HealthStatus {
   version: string;
 }
 
+export interface SqliteScanRecord {
+  id: number;
+  scan_id: string;
+  filename: string;
+  classification: ClassificationType;
+  classification_confidence: number;
+  reason: string;
+  non_bill_type: string | null;
+  merchant_name: string | null;
+  merchant_confidence: number | null;
+  merchant_reason: string | null;
+  bill_date: string | null;
+  bill_date_confidence: number | null;
+  bill_date_reason: string | null;
+  total_amount: number | null;
+  total_amount_confidence: number | null;
+  total_amount_reason: string | null;
+  currency: string | null;
+  category: string | null;
+  category_confidence: number | null;
+  category_reason: string | null;
+  raw_json: string;
+  created_at: string;
+}
+
+export interface SqliteScanStats {
+  total_scans: number;
+  total_bills: number;
+  total_non_bills: number;
+  total_spending: number;
+}
+
+

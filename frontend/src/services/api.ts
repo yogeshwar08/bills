@@ -68,3 +68,30 @@ export async function analyzeBill(file: File): Promise<BillAnalysisResponse> {
   }
 }
 
+export async function fetchScans(limit: number = 50, offset: number = 0) {
+  const res = await fetch(`${API_BASE}/scans?limit=${limit}&offset=${offset}`);
+  if (!res.ok) {
+    throw new ApiError('Failed to fetch scans from database.', res.status);
+  }
+  return await res.json();
+}
+
+export async function fetchScanStats() {
+  const res = await fetch(`${API_BASE}/scans-stats`);
+  if (!res.ok) {
+    throw new ApiError('Failed to fetch scan statistics.', res.status);
+  }
+  return await res.json();
+}
+
+export async function deleteScanRecord(scanId: string) {
+  const res = await fetch(`${API_BASE}/scans/${scanId}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) {
+    throw new ApiError('Failed to delete scan record.', res.status);
+  }
+  return await res.json();
+}
+
+

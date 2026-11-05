@@ -5,6 +5,7 @@ import { BottomNav } from './components/BottomNav';
 import { HomePage } from './pages/HomePage';
 import { HistoryPage } from './pages/HistoryPage';
 import { InsightsPage } from './pages/InsightsPage';
+import { DatabasePage } from './pages/DatabasePage';
 import { CameraUploadModal } from './components/CameraUploadModal';
 import { AnalysisLoadingView } from './components/AnalysisLoadingView';
 import { NonBillRejectionView } from './components/NonBillRejectionView';
@@ -144,6 +145,7 @@ const AppContent: React.FC = () => {
             <Route path="/" element={<HomePage onOpenUpload={() => setIsUploadOpen(true)} />} />
             <Route path="/history" element={<HistoryPage onOpenUpload={() => setIsUploadOpen(true)} />} />
             <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/database" element={<DatabasePage onOpenUpload={() => setIsUploadOpen(true)} />} />
             <Route path="*" element={<HomePage onOpenUpload={() => setIsUploadOpen(true)} />} />
           </Routes>
         )}
