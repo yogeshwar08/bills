@@ -165,3 +165,20 @@ def get_scans_stats():
     """Returns summary metrics across all scans saved in SQLite."""
     return db_service.get_stats()
 
+
+@router.post("/scans/seed")
+def seed_scans(force: bool = Query(default=False)):
+    """
+    Populates SQLite database with the 20 verified benchmark evaluation records.
+    Safe: does not overwrite existing records, uses unique scan IDs.
+    """
+    try:
+        return db_service.seed_benchmark_data(force=force)
+    except Exception as e:
+        logger.error("Failed to seed benchmark records: %s", str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error_code": "SEED_FAILED", "message": f"Seeding failed: {str(e)}"}
+        )
+
+

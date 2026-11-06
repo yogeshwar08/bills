@@ -337,5 +337,27 @@ def test_duplicate_bill_detection_same_and_different_amount():
         data3 = res3.json()
         assert data3["is_duplicate"] is False
 
+def test_seed_scans_endpoint():
+    res = client.post("/api/scans/seed?force=true")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "success"
+    assert "total_records" in data
+    assert data["total_records"] >= 20
+
+    # Verify records in /scans endpoint
+    scans_res = client.get("/api/scans?limit=5")
+    assert scans_res.status_code == 200
+    scans_data = scans_res.json()
+    assert len(scans_data) > 0
+
+    # Verify stats
+    stats_res = client.get("/api/scans-stats")
+    assert stats_res.status_code == 200
+    stats_data = stats_res.json()
+    assert stats_data["total_scans"] >= 20
+    assert stats_data["total_bills"] >= 15
+
+
 
 

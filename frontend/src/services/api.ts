@@ -137,4 +137,15 @@ export async function deleteScanRecord(scanId: string) {
   return await res.json();
 }
 
+export async function seedScans(force: boolean = false) {
+  const res = await fetch(`${API_BASE}/scans/seed?force=${force}`, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    throw new ApiError('Failed to seed benchmark records.', res.status);
+  }
+  return await res.json();
+}
+
+
 

@@ -17,8 +17,6 @@ DEFAULT_GEMINI_MODEL = "gemini-flash-lite-latest"
 FALLBACK_MODELS = [
     "gemini-flash-lite-latest",   # Primary: verified ~1.5s, active quota
     "gemini-3.5-flash-lite",      # Fallback 1: verified ~2.1s, active quota
-    "gemini-3.5-flash",           # Fallback 2: high capability (when daily quota available)
-    "gemini-flash-latest",        # Fallback 3
 ]
 
 class GeminiServiceException(Exception):
