@@ -84,19 +84,47 @@ export async function analyzeBill(file: File): Promise<BillAnalysisResponse> {
 }
 
 export async function fetchScans(limit: number = 50, offset: number = 0) {
-  const res = await fetch(`${API_BASE}/scans?limit=${limit}&offset=${offset}`);
-  if (!res.ok) {
-    throw new ApiError('Failed to fetch scans from database.', res.status);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(`${API_BASE}/scans?limit=${limit}&offset=${offset}`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      throw new ApiError('Failed to fetch scans from database.', res.status);
+    }
+    return await res.json();
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err instanceof ApiError) throw err;
+    if (err.name === 'AbortError') {
+      throw new ApiError('Database request timed out. Please click Refresh to try again.', 408, 'TIMEOUT');
+    }
+    throw new ApiError('Could not reach backend database. Please ensure backend is running.', 503, 'NETWORK_ERROR');
   }
-  return await res.json();
 }
 
 export async function fetchScanStats() {
-  const res = await fetch(`${API_BASE}/scans-stats`);
-  if (!res.ok) {
-    throw new ApiError('Failed to fetch scan statistics.', res.status);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(`${API_BASE}/scans-stats`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      throw new ApiError('Failed to fetch scan statistics.', res.status);
+    }
+    return await res.json();
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err instanceof ApiError) throw err;
+    if (err.name === 'AbortError') {
+      throw new ApiError('Stats request timed out.', 408, 'TIMEOUT');
+    }
+    throw new ApiError('Could not reach backend database.', 503, 'NETWORK_ERROR');
   }
-  return await res.json();
 }
 
 export async function deleteScanRecord(scanId: string) {

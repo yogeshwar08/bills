@@ -12,15 +12,13 @@ from app.schemas.bill_schema import BillAnalysisResponse, ClassificationEnum
 from app.prompts.bill_prompts import BILL_ANALYSIS_SYSTEM_PROMPT, BILL_ANALYSIS_USER_PROMPT
 from app.utils.logger import logger
 
-DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
-# Ordered by speed & reliability for structured JSON bill extraction from images
-# gemini-3.5-flash: confirmed fast (~2s), reliable with image+JSON mode
+DEFAULT_GEMINI_MODEL = "gemini-flash-lite-latest"
+# Ordered by speed, active quota, and reliability for structured JSON bill extraction
 FALLBACK_MODELS = [
-    "gemini-3.5-flash",           # Primary: fast, capable, confirmed working
-    "gemini-2.5-flash",           # Fallback 1: stable 2.5 series
-    "gemini-3.7-flash",           # Fallback 2: newer generation
-    "gemini-flash-lite-latest",   # Fallback 3: cheapest but slow for JSON extraction
-    "gemini-flash-latest",        # Fallback 4: may face high demand / 503
+    "gemini-flash-lite-latest",   # Primary: verified ~1.5s, active quota
+    "gemini-3.5-flash-lite",      # Fallback 1: verified ~2.1s, active quota
+    "gemini-3.5-flash",           # Fallback 2: high capability (when daily quota available)
+    "gemini-flash-latest",        # Fallback 3
 ]
 
 class GeminiServiceException(Exception):
@@ -172,9 +170,18 @@ class GeminiVisionService:
                             error_code="INVALID_API_KEY"
                         )
 
-                    # Model not found (404) or overloaded (503): skip to next fallback model immediately
-                    if "NOT_FOUND" in error_msg or "404" in error_msg or "503" in error_msg or "UNAVAILABLE" in error_msg or "high demand" in error_msg.lower():
-                        logger.warning("Model %s unavailable, trying next fallback...", model)
+                    # Model not found, overloaded (503), or quota exhausted (429): skip to next fallback model immediately!
+                    if (
+                        "NOT_FOUND" in error_msg
+                        or "404" in error_msg
+                        or "503" in error_msg
+                        or "UNAVAILABLE" in error_msg
+                        or "high demand" in error_msg.lower()
+                        or "429" in error_msg
+                        or "RESOURCE_EXHAUSTED" in error_msg
+                        or "quota" in error_msg.lower()
+                    ):
+                        logger.warning("Model %s unavailable or quota exhausted, trying next fallback immediately...", model)
                         break
 
                     # Other transient errors: retry once with delay
@@ -195,16 +202,6 @@ class GeminiVisionService:
                         time.sleep(delay)
                         continue
                     break
-
-                except GeminiServiceException:
-                    raise
-
-                except Exception as e:
-                    logger.error("Unexpected error in GeminiVisionService with %s: %s", model, str(e))
-                    last_error = e
-                    if attempt < max_retries:
-                        time.sleep(delay)
-                        continue
 
         if last_error:
             raise GeminiServiceException(

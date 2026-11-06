@@ -33,10 +33,10 @@ export const AnalysisLoadingView: React.FC<AnalysisLoadingViewProps> = ({
   useEffect(() => {
     if (error) return;
 
-    // Advance stages sequentially without fake percent counters
-    const t1 = setTimeout(() => setCurrentStage(2), 1200);
-    const t2 = setTimeout(() => setCurrentStage(3), 2600);
-    const t3 = setTimeout(() => setCurrentStage(4), 4200);
+    // Advance stages smoothly to match fast 2-3s AI extraction
+    const t1 = setTimeout(() => setCurrentStage(2), 700);
+    const t2 = setTimeout(() => setCurrentStage(3), 1500);
+    const t3 = setTimeout(() => setCurrentStage(4), 2300);
 
     return () => {
       clearTimeout(t1);
