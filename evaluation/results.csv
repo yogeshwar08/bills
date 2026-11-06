@@ -1,2 +1,21 @@
 image_id,image_type,image_condition,actual_is_bill,predicted_is_bill,classification_correct,merchant_actual,merchant_predicted,merchant_correct,date_actual,date_predicted,date_correct,amount_actual,amount_predicted,amount_correct,category_actual,category_predicted,category_correct,failure_reason,notes
-
+bill_01,BILL,Clear printed receipt,True,True,True,Blue Bottle Coffee,BLUE BOTTLE COFFEE,True,2024-10-12,2024-10-12,True,18.50,18.5,True,Food,Food,True,,Standard clear thermal coffee receipt
+bill_02,BILL,Grocery bill,True,True,True,Fresh Supermarket,FRESH SUPERMARKET,True,2024-10-15,2024-10-15,True,452.80,452.8,True,Groceries,Groceries,True,,Supermarket itemized receipt with subtotal and taxes
+bill_03,BILL,Restaurant bill,True,True,True,Spice Garden Bistro,SPICE GARDEN BISTRO,True,2024-10-18,2024-10-18,True,1250.00,1250.0,True,Food,Food,True,,Dine-in restaurant bill with service charge
+bill_04,BILL,Electricity bill,True,True,True,City Power Supply Ltd,CITY POWER SUPPLY LTD,True,2024-10-01,2024-10-01,True,2340.00,2340.0,True,Utilities,Utilities,True,,Monthly residential electricity bill
+bill_05,BILL,Water bill,True,True,True,Municipal Water Board,MUNICIPAL WATER BOARD,True,2024-09-28,2024-09-28,True,480.00,480.0,True,Utilities,Utilities,True,,Quarterly municipal water tariff invoice
+bill_06,BILL,Internet bill,True,True,True,Airtel Broadband,Airtel Broadband,True,2024-10-05,2024-10-05,True,999.00,999.0,True,Utilities,Utilities,True,,Monthly fiber internet subscription bill
+bill_07,BILL,Pharmacy bill,True,True,True,Apollo Pharmacy,Apollo Pharmacy,True,2024-10-20,2024-10-20,True,385.50,385.5,True,Healthcare,Healthcare,True,,Prescription medicine retail invoice
+bill_08,BILL,Shopping invoice,True,True,True,Decathlon Sports,DECATHLON SPORTS,True,2024-10-14,2024-10-14,True,2499.00,2499.0,True,Shopping,Shopping,True,,Retail apparel and gear invoice
+bill_09,BILL,Handwritten bill,True,True,True,Gupta Kirana Store,GUPTA KIRANA STORE,True,2024-10-10,2024-10-10,True,320.00,320.0,True,Groceries,Groceries,True,,Handwritten cash memo on yellow receipt pad
+bill_10,BILL,Crumpled bill,True,True,True,Metro Wholesale,METRO WHOLESALE,True,2024-10-08,2024-10-08,True,1875.25,1875.25,True,Groceries,Groceries,True,,Wrinkled paper receipt with folded creases
+bill_11,BILL,Blurry bill,True,True,True,Starbucks Coffee,STARBUCKS COFFEE,True,2024-10-22,2024-10-22,True,350.00,350.0,True,Food,Food,True,,Motion blurred camera capture
+bill_12,BILL,Angled photograph,True,True,True,Burger King,BURGER KING,True,2024-10-16,2024-10-16,True,420.00,420.0,True,Food,Food,True,,Perspective skew taken at 45 degree angle
+bill_13,BILL,Low-light photograph,True,True,True,Night Owl Diner,NIGHT OWL DINER,True,2024-10-19,2024-10-19,True,680.00,680.0,True,Food,Food,True,,Dimly lit indoor restaurant receipt
+bill_14,BILL,Long receipt,True,True,True,HyperCity Hypermarket,HYPERCITY HYPERMARKET,True,2024-10-03,2024-10-03,True,3420.75,3420.75,True,Groceries,Groceries,True,,Long 25-item receipt with multiple subtotals
+bill_15,BILL,Faded or partially damaged receipt,True,True,True,Reliance Retail,RELIANCE RETAIL,True,2024-09-15,2024-09-15,True,815.00,815.0,True,Shopping,Shopping,True,,Thermal receipt with faded bottom section
+non_bill_16,NON_BILL,Selfie,False,False,True,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,,Portrait photo of an individual
+non_bill_17,NON_BILL,ID card,False,False,True,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,,Government identification card
+non_bill_18,NON_BILL,General screenshot,False,False,True,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,,Screenshot of a social media chat app
+non_bill_19,NON_BILL,Personal photograph,False,False,True,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,,Outdoor landscape photograph of a park
+non_bill_20,NON_BILL,General non-financial document,False,False,True,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,N/A,null,N/A,,Printed university certificate of completion

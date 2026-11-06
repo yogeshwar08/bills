@@ -9,6 +9,7 @@ import os
 import sys
 import csv
 import re
+import time
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 
@@ -219,16 +220,28 @@ def run_evaluation():
                 else:
                     failure_reason = f"HTTP {resp.status_code}: {resp.text[:120]}"
             else:
-                # Direct service execution
+                # Direct service execution with automatic RPM backoff
                 processed_bytes, mime, dims = ImagePreprocessor.preprocess_image(file_bytes)
-                service_res = gemini_direct_service.analyze_bill_image(processed_bytes, mime)
-                classification = service_res.classification.value
-                predicted_is_bill = (classification == "BILL")
-                if service_res.fields:
-                    merchant_pred = service_res.fields.merchant_name.value
-                    date_pred = service_res.fields.date.value
-                    amount_pred = service_res.fields.total_amount.value
-                    category_pred = service_res.fields.category.value
+                service_res = None
+                for retry_attempt in range(3):
+                    try:
+                        service_res = gemini_direct_service.analyze_bill_image(processed_bytes, mime)
+                        break
+                    except Exception as err:
+                        if ("429" in str(err) or "quota" in str(err).lower()) and retry_attempt < 2:
+                            print(" [Rate limit backoff 35s] ", end="", flush=True)
+                            time.sleep(35)
+                        else:
+                            raise
+
+                if service_res:
+                    classification = service_res.classification.value
+                    predicted_is_bill = (classification == "BILL")
+                    if service_res.fields:
+                        merchant_pred = service_res.fields.merchant_name.value
+                        date_pred = service_res.fields.date.value
+                        amount_pred = service_res.fields.total_amount.value
+                        category_pred = service_res.fields.category.value
 
         except Exception as e:
             failure_reason = f"Exception: {str(e)[:100]}"
@@ -294,6 +307,9 @@ def run_evaluation():
             "failure_reason": failure_reason,
             "notes": item.get("notes", "")
         })
+
+        # Pacing to stay comfortably under 15 requests/minute free-tier limit
+        time.sleep(2.5)
 
     # 5. Write results.csv
     fieldnames = [
