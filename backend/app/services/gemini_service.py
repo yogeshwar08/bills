@@ -13,7 +13,15 @@ from app.prompts.bill_prompts import BILL_ANALYSIS_SYSTEM_PROMPT, BILL_ANALYSIS_
 from app.utils.logger import logger
 
 DEFAULT_GEMINI_MODEL = "gemini-flash-lite-latest"
-FALLBACK_MODELS = ["gemini-flash-lite-latest", "gemini-3.5-flash", "gemini-flash-latest"]
+# Ordered by preference: lightweight & fast first, then capable fallbacks
+# All confirmed working with generateContent + image + JSON response mode
+FALLBACK_MODELS = [
+    "gemini-flash-lite-latest",   # Primary: fastest, cheapest, confirmed working
+    "gemini-3.5-flash",           # Fallback 1: more capable, confirmed working
+    "gemini-flash-latest",        # Fallback 2: may face high demand / 503
+    "gemini-3.7-flash",           # Fallback 3: newer generation
+    "gemini-2.5-flash",           # Fallback 4: stable 2.5 series
+]
 
 class GeminiServiceException(Exception):
     """Custom exception for Gemini vision API errors."""
@@ -95,15 +103,18 @@ class GeminiVisionService:
         """
         Sends preprocessed image bytes to Gemini Vision API with structured system instructions.
         Applies automatic cascading across fallback models on transient 503 or 404 errors.
+        Model priority: gemini-flash-lite-latest -> gemini-3.5-flash -> gemini-flash-latest -> ...
         """
         client = self.get_client()
 
-        models_to_try = [self.model_name] + [m for m in FALLBACK_MODELS if m != self.model_name]
+        # Build deduped ordered list: configured model first, then all FALLBACK_MODELS in order
+        configured = self.model_name
+        models_to_try = [configured] + [m for m in FALLBACK_MODELS if m != configured]
         last_error: Optional[Exception] = None
 
         for model in models_to_try:
             max_retries = 1
-            delay = 1.0
+            delay = 1.5
 
             for attempt in range(max_retries + 1):
                 try:
@@ -149,7 +160,7 @@ class GeminiVisionService:
                     logger.warning("Gemini API error with %s on attempt %d: %s", model, attempt + 1, error_msg)
                     last_error = api_err
 
-                    # If authentication error, fail immediately
+                    # Authentication errors: fail immediately without trying other models
                     if "UNAUTHENTICATED" in error_msg or "API key not valid" in error_msg or "403" in error_msg:
                         raise GeminiServiceException(
                             "Invalid or unauthorized Gemini API key. Please verify your GEMINI_API_KEY in backend/.env.",
@@ -157,13 +168,29 @@ class GeminiVisionService:
                             error_code="INVALID_API_KEY"
                         )
 
-                    # If model not found or high demand, break to try next model in fallback list
-                    if "NOT_FOUND" in error_msg or "404" in error_msg or "503" in error_msg or "UNAVAILABLE" in error_msg:
+                    # Model not found (404) or overloaded (503): skip to next fallback model immediately
+                    if "NOT_FOUND" in error_msg or "404" in error_msg or "503" in error_msg or "UNAVAILABLE" in error_msg or "high demand" in error_msg.lower():
+                        logger.warning("Model %s unavailable, trying next fallback...", model)
                         break
 
+                    # Other transient errors: retry once with delay
                     if attempt < max_retries:
                         time.sleep(delay)
                         continue
+
+                    # Exhausted retries for this model
+                    break
+
+                except GeminiServiceException:
+                    raise
+
+                except Exception as e:
+                    logger.error("Unexpected error in GeminiVisionService with %s: %s", model, str(e))
+                    last_error = e
+                    if attempt < max_retries:
+                        time.sleep(delay)
+                        continue
+                    break
 
                 except GeminiServiceException:
                     raise
