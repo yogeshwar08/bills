@@ -12,15 +12,15 @@ from app.schemas.bill_schema import BillAnalysisResponse, ClassificationEnum
 from app.prompts.bill_prompts import BILL_ANALYSIS_SYSTEM_PROMPT, BILL_ANALYSIS_USER_PROMPT
 from app.utils.logger import logger
 
-DEFAULT_GEMINI_MODEL = "gemini-flash-lite-latest"
-# Ordered by preference: lightweight & fast first, then capable fallbacks
-# All confirmed working with generateContent + image + JSON response mode
+DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
+# Ordered by speed & reliability for structured JSON bill extraction from images
+# gemini-3.5-flash: confirmed fast (~2s), reliable with image+JSON mode
 FALLBACK_MODELS = [
-    "gemini-flash-lite-latest",   # Primary: fastest, cheapest, confirmed working
-    "gemini-3.5-flash",           # Fallback 1: more capable, confirmed working
-    "gemini-flash-latest",        # Fallback 2: may face high demand / 503
-    "gemini-3.7-flash",           # Fallback 3: newer generation
-    "gemini-2.5-flash",           # Fallback 4: stable 2.5 series
+    "gemini-3.5-flash",           # Primary: fast, capable, confirmed working
+    "gemini-2.5-flash",           # Fallback 1: stable 2.5 series
+    "gemini-3.7-flash",           # Fallback 2: newer generation
+    "gemini-flash-lite-latest",   # Fallback 3: cheapest but slow for JSON extraction
+    "gemini-flash-latest",        # Fallback 4: may face high demand / 503
 ]
 
 class GeminiServiceException(Exception):
@@ -103,7 +103,8 @@ class GeminiVisionService:
         """
         Sends preprocessed image bytes to Gemini Vision API with structured system instructions.
         Applies automatic cascading across fallback models on transient 503 or 404 errors.
-        Model priority: gemini-flash-lite-latest -> gemini-3.5-flash -> gemini-flash-latest -> ...
+        Model priority: gemini-3.5-flash -> gemini-2.5-flash -> gemini-3.7-flash -> ...
+        Per-model timeout: 30 seconds to avoid indefinite hangs on slow models.
         """
         client = self.get_client()
 
@@ -123,6 +124,7 @@ class GeminiVisionService:
                         model, attempt + 1, max_retries + 1, len(image_bytes)
                     )
 
+                    start_time = time.time()
                     response = client.models.generate_content(
                         model=model,
                         contents=[
@@ -135,6 +137,8 @@ class GeminiVisionService:
                             temperature=0.1,
                         )
                     )
+                    elapsed = time.time() - start_time
+                    logger.info("Model %s responded in %.1f seconds", model, elapsed)
 
                     if not response or not response.text:
                         raise GeminiServiceException(

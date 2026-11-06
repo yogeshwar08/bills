@@ -37,11 +37,18 @@ export async function analyzeBill(file: File): Promise<BillAnalysisResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
+  // Abort if analysis takes longer than 60 seconds
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
+
   try {
     const res = await fetch(`${API_BASE}/analyze`, {
       method: 'POST',
       body: formData,
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     const data = await res.json();
 
@@ -54,8 +61,16 @@ export async function analyzeBill(file: File): Promise<BillAnalysisResponse> {
 
     return data as BillAnalysisResponse;
   } catch (err: any) {
+    clearTimeout(timeoutId);
     if (err instanceof ApiError) {
       throw err;
+    }
+    if (err.name === 'AbortError') {
+      throw new ApiError(
+        'Analysis timed out after 60 seconds. The AI model may be under heavy load. Please try again.',
+        408,
+        'ANALYSIS_TIMEOUT'
+      );
     }
     // Network or connection failure
     throw new ApiError(
