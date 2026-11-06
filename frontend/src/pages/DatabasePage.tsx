@@ -15,10 +15,10 @@ import { fetchScans, fetchScanStats, deleteScanRecord } from '../services/api';
 import { SqliteScanRecord, SqliteScanStats, ClassificationType } from '../types';
 
 interface DatabasePageProps {
-  onOpenUpload: () => void;
+  onOpenScan: () => void;
 }
 
-export const DatabasePage: React.FC<DatabasePageProps> = ({ onOpenUpload }) => {
+export const DatabasePage: React.FC<DatabasePageProps> = ({ onOpenScan }) => {
   const [scans, setScans] = useState<SqliteScanRecord[]>([]);
   const [stats, setStats] = useState<SqliteScanStats | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -118,7 +118,7 @@ export const DatabasePage: React.FC<DatabasePageProps> = ({ onOpenUpload }) => {
           </button>
           <button
             type="button"
-            onClick={onOpenUpload}
+            onClick={onOpenScan}
             className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm shadow-indigo-200 transition-all cursor-pointer"
           >
             <span>+ Scan New Bill</span>

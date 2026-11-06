@@ -273,12 +273,14 @@ def test_duplicate_bill_detection_same_and_different_amount():
     2. Exact duplicate bill (same merchant + same amount): is_duplicate is True with duplicate_warning.
     3. Same merchant but DIFFERENT amount: is_duplicate is False (accepted!).
     """
+    import uuid
+    unique_merchant = f"Blue Tokai {uuid.uuid4().hex[:6]}"
     first_bill = BillAnalysisResponse(
         classification=ClassificationEnum.BILL,
         classification_confidence=0.98,
         reason="Retail receipt",
         fields=BillFields(
-            merchant_name=ExtractedField(value="Blue Tokai Coffee", confidence=0.95, reason=None),
+            merchant_name=ExtractedField(value=unique_merchant, confidence=0.95, reason=None),
             date=ExtractedField(value="2026-11-05", confidence=0.92, reason=None),
             total_amount=ExtractedField(value=350.00, confidence=0.98, reason=None),
             currency="INR",
@@ -301,7 +303,7 @@ def test_duplicate_bill_detection_same_and_different_amount():
         classification_confidence=0.98,
         reason="Retail receipt",
         fields=BillFields(
-            merchant_name=ExtractedField(value="Blue Tokai Coffee", confidence=0.95, reason=None),
+            merchant_name=ExtractedField(value=unique_merchant, confidence=0.95, reason=None),
             date=ExtractedField(value="2026-11-05", confidence=0.92, reason=None),
             total_amount=ExtractedField(value=350.00, confidence=0.98, reason=None),
             currency="INR",
@@ -314,7 +316,7 @@ def test_duplicate_bill_detection_same_and_different_amount():
         data2 = res2.json()
         assert data2["is_duplicate"] is True
         assert "duplicate_warning" in data2
-        assert "Blue Tokai Coffee" in data2["duplicate_warning"]
+        assert unique_merchant in data2["duplicate_warning"]
 
     # Step 3: Same merchant but DIFFERENT amount (520.00) -> NOT a duplicate! Must be accepted!
     diff_amount_bill = BillAnalysisResponse(
@@ -322,7 +324,7 @@ def test_duplicate_bill_detection_same_and_different_amount():
         classification_confidence=0.98,
         reason="Retail receipt",
         fields=BillFields(
-            merchant_name=ExtractedField(value="Blue Tokai Coffee", confidence=0.95, reason=None),
+            merchant_name=ExtractedField(value=unique_merchant, confidence=0.95, reason=None),
             date=ExtractedField(value="2026-11-05", confidence=0.92, reason=None),
             total_amount=ExtractedField(value=520.00, confidence=0.98, reason=None),
             currency="INR",

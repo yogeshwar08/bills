@@ -6,7 +6,7 @@ import { HomePage } from './pages/HomePage';
 import { HistoryPage } from './pages/HistoryPage';
 import { InsightsPage } from './pages/InsightsPage';
 import { DatabasePage } from './pages/DatabasePage';
-import { CameraUploadModal } from './components/CameraUploadModal';
+import { CameraUploadModal, CapturedImageState, CaptureSectionMode } from './components/CameraUploadModal';
 import { AnalysisLoadingView } from './components/AnalysisLoadingView';
 import { NonBillRejectionView } from './components/NonBillRejectionView';
 import { ExtractionCorrectionView } from './components/ExtractionCorrectionView';
@@ -15,13 +15,26 @@ import { createThumbnail } from './utils/imageCompressor';
 import { BillAnalysisResponse, SavedBill } from './types';
 import { CheckCircle2 } from 'lucide-react';
 
+const emptyCaptureState: CapturedImageState = {
+  file: null,
+  previewUrl: null,
+  key: '',
+};
+
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
 
-  // Upload & Camera Modal
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  // 1. Independent State for "Add Expense" section
+  const [addExpenseImage, setAddExpenseImage] = useState<CapturedImageState>(emptyCaptureState);
 
-  // Active Analysis State
+  // 2. Independent State for "Scan" section
+  const [scanImage, setScanImage] = useState<CapturedImageState>(emptyCaptureState);
+
+  // Active capture modal & trigger intent
+  const [activeModal, setActiveModal] = useState<CaptureSectionMode | null>(null);
+  const [modalInitialAction, setModalInitialAction] = useState<'camera' | 'gallery' | null>(null);
+
+  // Active Analysis Session State
   const [activeFile, setActiveFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [thumbnailBase64, setThumbnailBase64] = useState<string | null>(null);
@@ -33,10 +46,63 @@ const AppContent: React.FC = () => {
   // Success Notification Toast
   const [savedToast, setSavedToast] = useState<string | null>(null);
 
+  // Modal open handlers
+  const handleOpenAddExpense = (action?: 'camera' | 'gallery') => {
+    setActiveModal('add_expense');
+    setModalInitialAction(action || null);
+  };
+
+  const handleOpenScan = (action?: 'camera' | 'gallery') => {
+    setActiveModal('scan');
+    setModalInitialAction(action || null);
+  };
+
+  const handleCloseModal = () => {
+    // Preserves selected image when simply closing or opening preview
+    setActiveModal(null);
+    setModalInitialAction(null);
+  };
+
+  const handleClearImageState = () => {
+    if (activeModal === 'add_expense') {
+      if (addExpenseImage.previewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(addExpenseImage.previewUrl);
+      }
+      setAddExpenseImage(emptyCaptureState);
+    } else if (activeModal === 'scan') {
+      if (scanImage.previewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(scanImage.previewUrl);
+      }
+      setScanImage(emptyCaptureState);
+    }
+  };
+
+  const handleUpdateImageState = (newState: CapturedImageState) => {
+    if (activeModal === 'add_expense') {
+      setAddExpenseImage(newState);
+    } else if (activeModal === 'scan') {
+      setScanImage(newState);
+    }
+  };
+
+  const handleConfirmModal = (file: File, url: string) => {
+    const currentMode = activeModal;
+    setActiveModal(null);
+    setModalInitialAction(null);
+
+    // Reset that section's captured image state upon confirmed submission
+    if (currentMode === 'add_expense') {
+      setAddExpenseImage(emptyCaptureState);
+    } else if (currentMode === 'scan') {
+      setScanImage(emptyCaptureState);
+    }
+
+    startAnalysisSession(file, url);
+  };
+
   const startAnalysisSession = async (file: File, url: string) => {
     setActiveFile(file);
     setPreviewUrl(url);
-    setIsUploadOpen(false);
     setIsAnalyzing(true);
     setAnalysisError(null);
     setAnalysisResult(null);
@@ -87,6 +153,10 @@ const AppContent: React.FC = () => {
 
   const handleSaveSuccess = (savedBill: SavedBill) => {
     handleCancelSession();
+    // Ensure all capture states are completely cleared upon saving
+    setAddExpenseImage(emptyCaptureState);
+    setScanImage(emptyCaptureState);
+
     setSavedToast(`Saved bill from ${savedBill.merchantName} (₹${savedBill.amount.toFixed(2)})`);
     setTimeout(() => setSavedToast(null), 4000);
     navigate('/history');
@@ -95,9 +165,15 @@ const AppContent: React.FC = () => {
   // Determine whether an active analysis / correction session is taking over the screen
   const isSessionActive = Boolean(previewUrl && (isAnalyzing || analysisError || analysisResult));
 
+  // Supply isolated image state to the active modal mode
+  const currentModalImage = activeModal === 'add_expense' ? addExpenseImage : scanImage;
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Navbar onOpenUpload={() => setIsUploadOpen(true)} />
+      <Navbar 
+        onOpenScan={() => handleOpenScan()} 
+        onOpenAddExpense={() => handleOpenAddExpense()}
+      />
 
       {/* Global Success Toast */}
       {savedToast && (
@@ -109,7 +185,7 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content Area - Full width responsive container */}
+      {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 transition-all">
         {isSessionActive ? (
           <div>
@@ -126,7 +202,7 @@ const AppContent: React.FC = () => {
                 result={analysisResult}
                 onTryAnother={() => {
                   handleCancelSession();
-                  setIsUploadOpen(true);
+                  handleOpenScan();
                 }}
                 onRetry={handleRetry}
               />
@@ -142,21 +218,58 @@ const AppContent: React.FC = () => {
           </div>
         ) : (
           <Routes>
-            <Route path="/" element={<HomePage onOpenUpload={() => setIsUploadOpen(true)} />} />
-            <Route path="/history" element={<HistoryPage onOpenUpload={() => setIsUploadOpen(true)} />} />
+            <Route 
+              path="/" 
+              element={
+                <HomePage 
+                  onOpenAddExpense={handleOpenAddExpense} 
+                  onOpenScan={() => handleOpenScan()}
+                />
+              } 
+            />
+            <Route 
+              path="/history" 
+              element={
+                <HistoryPage 
+                  onOpenScan={() => handleOpenScan()}
+                />
+              } 
+            />
             <Route path="/insights" element={<InsightsPage />} />
-            <Route path="/database" element={<DatabasePage onOpenUpload={() => setIsUploadOpen(true)} />} />
-            <Route path="*" element={<HomePage onOpenUpload={() => setIsUploadOpen(true)} />} />
+            <Route 
+              path="/database" 
+              element={
+                <DatabasePage 
+                  onOpenScan={() => handleOpenScan()}
+                />
+              } 
+            />
+            <Route 
+              path="*" 
+              element={
+                <HomePage 
+                  onOpenAddExpense={handleOpenAddExpense} 
+                  onOpenScan={() => handleOpenScan()}
+                />
+              } 
+            />
           </Routes>
         )}
       </main>
 
-      {/* Camera / Upload Modal */}
-      <CameraUploadModal
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        onStartAnalysis={startAnalysisSession}
-      />
+      {/* Camera / Upload Modal (supports both Add Expense and Scan with isolated state) */}
+      {activeModal && (
+        <CameraUploadModal
+          isOpen={Boolean(activeModal)}
+          mode={activeModal}
+          initialAction={modalInitialAction}
+          currentImageState={currentModalImage}
+          onUpdateImageState={handleUpdateImageState}
+          onClearImageState={handleClearImageState}
+          onClose={handleCloseModal}
+          onConfirm={handleConfirmModal}
+        />
+      )}
 
       {/* Bottom Navigation (visible when not reviewing a bill) */}
       {!isSessionActive && <BottomNav />}

@@ -7,7 +7,7 @@ import { BillDetailModal } from '../components/BillDetailModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 
 interface HistoryPageProps {
-  onOpenUpload: () => void;
+  onOpenScan: () => void;
 }
 
 const CATEGORY_FILTERS: (BillCategory | 'All')[] = [
@@ -25,7 +25,7 @@ const CATEGORY_FILTERS: (BillCategory | 'All')[] = [
 
 type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
 
-export const HistoryPage: React.FC<HistoryPageProps> = ({ onOpenUpload }) => {
+export const HistoryPage: React.FC<HistoryPageProps> = ({ onOpenScan }) => {
   const allBills = useLiveQuery(() => db.bills.toArray(), []);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,7 +98,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onOpenUpload }) => {
         </div>
         <button
           type="button"
-          onClick={onOpenUpload}
+          onClick={onOpenScan}
           className="py-2 px-3 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-4 h-4" />

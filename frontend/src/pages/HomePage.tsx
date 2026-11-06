@@ -19,10 +19,11 @@ import { BillDetailModal } from '../components/BillDetailModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 
 interface HomePageProps {
-  onOpenUpload: () => void;
+  onOpenAddExpense: (initialAction?: 'camera' | 'gallery') => void;
+  onOpenScan: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onOpenUpload }) => {
+export const HomePage: React.FC<HomePageProps> = ({ onOpenAddExpense, onOpenScan }) => {
   // Real live query from IndexedDB
   const bills = useLiveQuery(() => db.bills.orderBy('createdAt').reverse().toArray(), []);
 
@@ -93,7 +94,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenUpload }) => {
           <div className="grid grid-cols-2 gap-3 pt-4 md:pt-0 shrink-0 md:w-80">
             <button
               type="button"
-              onClick={onOpenUpload}
+              onClick={() => onOpenAddExpense('camera')}
               className="py-4 px-4 rounded-2xl bg-white text-indigo-950 font-bold text-xs flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2 shadow-sm hover:bg-indigo-50 active:scale-[0.98] transition-all touch-manipulation cursor-pointer"
             >
               <Camera className="w-5 h-5 text-indigo-600" />
@@ -101,7 +102,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenUpload }) => {
             </button>
             <button
               type="button"
-              onClick={onOpenUpload}
+              onClick={() => onOpenAddExpense('gallery')}
               className="py-4 px-4 rounded-2xl bg-indigo-500/30 hover:bg-indigo-500/40 text-white font-bold text-xs border border-white/20 flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2 active:scale-[0.98] transition-all touch-manipulation cursor-pointer"
             >
               <ImageIcon className="w-5 h-5 text-indigo-200" />
@@ -184,7 +185,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenUpload }) => {
             </div>
             <button
               type="button"
-              onClick={onOpenUpload}
+              onClick={onOpenScan}
               className="inline-flex items-center space-x-1.5 py-3 px-5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-sm hover:bg-indigo-700 transition-colors cursor-pointer"
             >
               <Camera className="w-4 h-4" />

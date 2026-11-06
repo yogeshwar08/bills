@@ -4,10 +4,11 @@ import { ReceiptText, Wifi, WifiOff, Camera, Home, History, PieChart, Database }
 import { fetchHealth } from '../services/api';
 
 interface NavbarProps {
-  onOpenUpload?: () => void;
+  onOpenScan?: () => void;
+  onOpenAddExpense?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenUpload }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenScan }) => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
   const [geminiConfigured, setGeminiConfigured] = useState<boolean | null>(null);
@@ -106,16 +107,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenUpload }) => {
           </NavLink>
         </nav>
 
-        {/* Right Action: Connectivity status & Desktop Scan Button */}
-        <div className="flex items-center space-x-3 text-xs">
-          {onOpenUpload && (
+        {/* Right Action: Connectivity status & Scan Button */}
+        <div className="flex items-center space-x-2.5 sm:space-x-3 text-xs">
+          {onOpenScan && (
             <button
               type="button"
-              onClick={onOpenUpload}
-              className="hidden md:inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs shadow-sm shadow-indigo-200 transition-all cursor-pointer"
+              onClick={onOpenScan}
+              className="inline-flex items-center space-x-1.5 px-3 py-2 sm:px-4 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs shadow-sm shadow-indigo-200 transition-all cursor-pointer touch-manipulation"
+              title="Open Scan Receipt"
             >
-              <Camera className="w-4 h-4" />
-              <span>Scan Bill</span>
+              <Camera className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Scan Bill</span>
+              <span className="sm:hidden">Scan</span>
             </button>
           )}
 
